@@ -24,8 +24,9 @@
     </style>
 </head>
 <body>
+
 <div id="container">
-    <h3 id="main-title">HIPPOP PRINCESS OT40</h3>
+    <h3 id="main-title">點擊你更喜歡的參賽者👑</h3>
     <div id="game-ui">
         <div class="progress-container"><div id="progress-bar"></div></div>
         <div class="choices">
@@ -44,10 +45,18 @@
         <button class="btn" onclick="window.location.reload()">重新開始</button>
     </div>
 </div>
+
 <script>
-function getImgUrl(id) {
+// 使用最強力的 Google Drive 縮圖接口（通常能繞過封鎖）
+function getImgUrl(url) {
+    const match = url.match(/[-\w]{25,}/);
+    if (!match) return "https://placehold.co/300x300?text=Error";
+    const id = match[0];
+    // 修正後的正確 Google Drive 圖片接口
     return `https://drive.google.com/uc?export=view&id=${id}`;
 }
+
+
 const raw = [
     {n:"Choi gayoon", i:"1XbM3T6trFiR_aeQW5NJHzXvHkQGFY53v"},
     {n:"Choi you min", i:"1IX2cbpkiYQkLVaCXxLgfPwu2Ad9YWoSX"},
@@ -90,9 +99,11 @@ const raw = [
     {n:"Urara", i:"1MQoByvKljpYuDku8efZ4XFtHwbyXG5PK"},
     {n:"Yunon", i:"1V36-gsDU_UVo-OYoK-FTeYr14fE9Zue6"}
 ];
+
 const data = raw.map(v => ({ n: v.n, i: getImgUrl(v.i) }));
 let workList = data.map(x => [x]);
 let pending = [], nextRound = [], leftArr = [], rightArr = [], merged = [], lIdx = 0, rIdx = 0, steps = 0;
+
 function setup() {
     if (workList.length <= 1) { showRes(workList[0]); return; }
     pending = []; nextRound = [];
@@ -100,31 +111,36 @@ function setup() {
         if (i+1 < workList.length) pending.push({ a: workList[i], b: workList[i+1] });
         else nextRound.push(workList[i]);
     }
+    document.getElementById('main-title').innerText = "點擊你更喜歡的成員";
     go();
 }
+
 function go() {
     if (pending.length === 0) { workList = nextRound; setup(); return; }
     let t = pending.shift(); leftArr = t.a; rightArr = t.b;
     lIdx = 0; rIdx = 0; merged = [];
     draw();
 }
+
 function draw() {
     document.getElementById('img-l').src = leftArr[lIdx].i;
     document.getElementById('name-l').innerText = leftArr[lIdx].n;
     document.getElementById('img-r').src = rightArr[rIdx].i;
     document.getElementById('name-r').innerText = rightArr[rIdx].n;
     steps++;
-    document.getElementById('progress-bar').style.width = Math.min((steps/200)*100, 99) + "%";
+    document.getElementById('progress-bar').style.width = Math.min((steps/195)*100, 99) + "%";
 }
+
 function pick(side) {
     if (side === 0) { merged.push(leftArr[lIdx]); lIdx++; }
     else { merged.push(rightArr[rIdx]); rIdx++; }
     if (lIdx < leftArr.length && rIdx < rightArr.length) draw();
     else { nextRound.push(merged.concat(leftArr.slice(lIdx)).concat(rightArr.slice(rIdx))); go(); }
 }
+
 function showRes(final) {
     document.getElementById('game-ui').style.display = 'none';
-    document.getElementById('main-title').innerText = "最終排名";
+    document.getElementById('main-title').innerText = "排序完成！";
     const res = document.getElementById('result');
     const list = document.getElementById('result-list');
     res.style.display = 'block';
