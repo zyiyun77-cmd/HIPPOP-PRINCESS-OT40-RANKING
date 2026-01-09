@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HIPPOP PRINCESS OT40 RANKING</title>
+    <style>
+        :root { --primary: #ff6b6b; --bg: #f8f9fa; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 10px; margin: 0; touch-action: manipulation; }
+        #container { max-width: 500px; width: 100%; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); text-align: center; box-sizing: border-box; }
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: var(--primary); transition: 0.3s; }
+        .choices { display: flex; gap: 12px; margin-bottom: 20px; }
+        .card { flex: 1; border: 3px solid #f0f0f0; border-radius: 15px; cursor: pointer; background: #fff; transition: 0.2s; overflow: hidden; position: relative; }
+        .card:active { transform: scale(0.95); border-color: var(--primary); }
+        .img-box { width: 100%; aspect-ratio: 1/1; background: #eee; overflow: hidden; pointer-events: none; }
+        .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .name { padding: 12px 5px; font-weight: bold; font-size: 0.9rem; color: #333; min-height: 45px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        #result { display: none; text-align: left; }
+        .result-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .result-rank { width: 35px; font-weight: bold; color: var(--primary); }
+        .result-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin: 0 15px; border: 1px solid #ddd; }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <h3 id="main-title">點擊你更喜歡的參賽者👑</h3>
+    <div id="game-ui">
+        <div class="progress-container"><div id="progress-bar"></div></div>
+        <div class="choices">
+            <div id="card-l" class="card" onclick="pick(0)">
+                <div class="img-box"><img id="img-l" src=""></div>
+                <div class="name" id="name-l">載入中...</div>
+            </div>
+            <div id="card-r" class="card" onclick="pick(1)">
+                <div class="img-box"><img id="img-r" src=""></div>
+                <div class="name" id="name-r">載入中...</div>
+            </div>
+        </div>
+        <p id="counter" style="color:#999; font-size:0.8rem;">如果圖片出不來，請嘗試切換網路或稍等 3 秒</p>
+    </div>
+    <div id="result">
+        <div id="result-list"></div>
+        <button class="btn" onclick="window.location.reload()">重新開始</button>
+    </div>
+</div>
+
+<script>
+// 提取 ID 並轉換連結
+function getImgUrl(url) {
+    const match = url.match(/[-\w]{25,}/);
+    if (!match) return "https://placehold.co/300x300?text=Link+Error";
+    const id = match[0];
+    // 使用 Google Drive 直接讀取接口 (uc 接口)
+    return `https://drive.google.com/uc?export=view&id=${id}`;
+}
+
+const raw = [
+    {n:"Choi gayoon", i:"https://drive.google.com/file/d/1XbM3T6trFiR_aeQW5NJHzXvHkQGFY53v/view"},
+    {n:"Choi you min", i:"https://drive.google.com/file/d/1IX2cbpkiYQkLVaCXxLgfPwu2Ad9YWoSX/view"},
+    {n:"Han heeyeon", i:"https://drive.google.com/file/d/1xgnOk1OrR_dsS0ZveQ9KjRp7Agw_TKzz/view"},
+    {n:"Kim chaerin", i:"https://drive.google.com/file/d/1TVRUQaeqRlzOouuNEjy_kE0A_4A5IJBK/view"},
+    {n:"Kim doyi", i:"https://drive.google.com/file/d/1t5uzMbz8e4zqoinJyJAvNXvvNDPZdz8q/view"},
+    {n:"Kim sujin", i:"https://drive.google.com/file/d/1Kd8AbdDQVmtAlnYMcf5DY0Y-QSpTvPt9/view"},
+    {n:"Kim yeeun", i:"https://drive.google.com/file/d/1XPGVVWQSmdR8FdcMPfJ_uvF6ObgDYz2l/view"},
+    {n:"Kwon dohee", i:"https://drive.google.com/file/d/1XMCwyZZN7cquEDkLC7O42rFajwm14z4x/view"},
+    {n:"Lee chaehyun", i:"https://drive.google.com/file/d/1gqDWFbVBbD5B_QZ-d9S5ElmRc2CXeBBQ/view"},
+    {n:"Lee chaeyeon", i:"https://drive.google.com/file/d/1aX6D_pjr9H0MVlmOOSGWLMs-CWYe5vF5/view"},
+    {n:"Lee jooeun", i:"https://drive.google.com/file/d/1-3M5x9RGveZDiZLFOcjTCySMRwzpmxyt/view"},
+    {n:"Lee seohyun", i:"https://drive.google.com/file/d/1ZFjPjX6rqDijNaXRt4ZogKnNdsbOvS78/view"},
+    {n:"Min Jiho", i:"https://drive.google.com/file/d/1v1dXRV1IhdVhCY4bn_imzuvI1Lw_k4HH/view"},
+    {n:"Nam yuju", i:"https://drive.google.com/file/d/1Kipv-eVZHsHwDdaOKvpBJCn0Oc-Yd-3G/view"},
+    {n:"Ryu hajin", i:"https://drive.google.com/file/d/1QxUVp_C72ntcRvyR2CJhsjnqN4KhA4xK/view"},
+    {n:"Shin yookyung", i:"https://drive.google.com/file/d/1zsY4WBa2m18veazleM98yPeaHRcGRati/view"},
+    {n:"Yang jaeyun", i:"https://drive.google.com/file/d/1hNU4SCOdiHGb2LvhoxLyp1uWtvMzDdm2/view"},
+    {n:"Yoon chaeeun", i:"https://drive.google.com/file/d/1Yh7QdMxubCI-nvm0WgW2sSF8qRDBizBT/view"},
+    {n:"Yoon sooin", i:"https://drive.google.com/file/d/1vRyCbu880vw3AE9duDtzwnqswSvEJkXh/view"},
+    {n:"Yun seoyoung", i:"https://drive.google.com/file/d/1rNCBdE3nYeUPOTA-lxwxPlHDQBhZYmpK/view"},
+    {n:"Cocoro", i:"https://drive.google.com/file/d/1wAj_dRupuEDA5paYUbRlCstYn2ve3TJ4/view"},
+    {n:"Hanabi", i:"https://drive.google.com/file/d/12g1ZZ4L-VNN7NBDcSZOa6H6UIpByn2bm/view"},
+    {n:"Hina", i:"https://drive.google.com/file/d/1VtZknWg406buptS8mElWvSvjms9sk1WD/view"},
+    {n:"Karin", i:"https://drive.google.com/file/d/1Yl8qeujZGzxrLzX82sQpXGkM0JxtAIRB/view"},
+    {n:"Koko", i:"https://drive.google.com/file/d/1jxBzgPPmxSqHbUEG4ET7IDCFg8cqZSY0/view"},
+    {n:"Mayu", i:"https://drive.google.com/file/d/1yrUkVtKQ7Is-a_Uy2sZ7vq_t0V-hIAKv/view"},
+    {n:"Mia", i:"https://drive.google.com/file/d/1A4K_XPjMG7rcOkNOzmGRVMOxWE-WW9wN/view"},
+    {n:"Mirika", i:"https://drive.google.com/file/d/1WqwdBPgphZaiNKICbXPbQZjBUNP1lV2Y/view"},
+    {n:"Miyabi", i:"https://drive.google.com/file/d/15_VbPF5XSfh2AevaXiq7yWHIkMWHvGXz/view"},
+    {n:"Nana", i:"https://drive.google.com/file/d/1m0KpNFdaF6brEvWChOb8kLD4atNe02vG/view"},
+    {n:"Natsuho", i:"https://drive.google.com/file/d/1FQc9wTnC3_gTlv34zwCciZwEuDrRnI1h/view"},
+    {n:"Niko", i:"https://drive.google.com/file/d/1nqZj9xKzJ2D3S0Z4dVoX7A5JSvBJVkL4/view"},
+    {n:"Rino", i:"https://drive.google.com/file/d/1l-ws21G3j8XVCtQTav3RP-QEBdfeYO1X/view"},
+    {n:"Saaya", i:"https://drive.google.com/file/d/1uNLPQSOFFixEBK55S0gQcnC9ph-t35Gl/view"},
+    {n:"Sasa", i:"https://drive.google.com/file/d/1fj7I9ZMVm0mAwvP8rxnDaxSz-MSqd44V/view"},
+    {n:"Sea", i:"https://drive.google.com/file/d/1JwSpBDcPCg9AGlcO9UYTeq-yyry9ko0-/view"},
+    {n:"Sena", i:"https://drive.google.com/file/d/13JMFM13oGuYVuPA-o9c_J7wwAIxr66bb/view"},
+    {n:"Shiho", i:"https://drive.google.com/file/d/1wlE7V2HfXvuN807y016uU0o8H9amLRsn/view"},
+    {n:"Urara", i:"https://drive.google.com/file/d/1MQoByvKljpYuDku8efZ4XFtHwbyXG5PK/view"},
+    {n:"Yunon", i:"https://drive.google.com/file/d/1V36-gsDU_UVo-OYoK-FTeYr14fE9Zue6/view"}
+];
+
+const data = raw.map(v => ({ n: v.n, i: getImgUrl(v.i) }));
+let workList = data.map(x => [x]);
+let pending = [], nextRound = [], leftArr = [], rightArr = [], merged = [], lIdx = 0, rIdx = 0, steps = 0;
+
+function setup() {
+    if (workList.length <= 1) { showRes(workList[0]); return; }
+    pending = []; nextRound = [];
+    for (let i = 0; i < workList.length; i += 2) {
+        if (i+1 < workList.length) pending.push({ a: workList[i], b: workList[i+1] });
+        else nextRound.push(workList[i]);
+    }
+    document.getElementById('main-title').innerText = "點擊你更喜歡的參賽者👑";
+    go();
+}
+
+function go() {
+    if (pending.length === 0) { workList = nextRound; setup(); return; }
+    let t = pending.shift(); leftArr = t.a; rightArr = t.b;
+    lIdx = 0; rIdx = 0; merged = [];
+    draw();
+}
+
+function draw() {
+    // 同時預載入
+    document.getElementById('img-l').src = leftArr[lIdx].i;
+    document.getElementById('name-l').innerText = leftArr[lIdx].n;
+    document.getElementById('img-r').src = rightArr[rIdx].i;
+    document.getElementById('name-r').innerText = rightArr[rIdx].n;
+    steps++;
+    document.getElementById('progress-bar').style.width = Math.min((steps/195)*100, 99) + "%";
+}
+
+function pick(side) {
+    if (side === 0) { merged.push(leftArr[lIdx]); lIdx++; }
+    else { merged.push(rightArr[rIdx]); rIdx++; }
+    
+    if (lIdx < leftArr.length && rIdx < rightArr.length) draw();
+    else { nextRound.push(merged.concat(leftArr.slice(lIdx)).concat(rightArr.slice(rIdx))); go(); }
+}
+
+function showRes(final) {
+    document.getElementById('game-ui').style.display = 'none';
+    document.getElementById('main-title').innerText = "排序完成！";
+    const res = document.getElementById('result');
+    const list = document.getElementById('result-list');
+    res.style.display = 'block';
+    final.forEach((it, i) => {
+        list.innerHTML += `<div class="result-item"><div class="result-rank">${i+1}</div><img class="result-img" src="${it.i}"><div>${it.n}</div></div>`;
+    });
+}
+setup();
+</script>
+</body>
+</html>
